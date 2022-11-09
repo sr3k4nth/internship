@@ -5,6 +5,7 @@ const {
   successResponse,
   errorResponse,
 } = require("../helpers/apiResponseHelper");
+const CurrencyModel = require("../../src/db/models/CurrencyList");
 
 const router = express.Router();
 
@@ -54,7 +55,7 @@ router.get("/rates", async (req, res) => {
         $lt: toDate || "2013-12-20T00:00:00.000+0000",
       },
     };
-    const dbResult = await RatesModel.find(payload);
+    const dbResult = await RatesModel(payload);
 
     const getHighest = Math.max(...dbResult.map((val) => val.exchangeRate));
     const getLowest = Math.min(...dbResult.map((val) => val.exchangeRate));
@@ -77,6 +78,17 @@ router.get("/rates", async (req, res) => {
     };
 
     const apiResult = successResponse(result, []);
+    res.json(apiResult);
+  } catch (e) {
+    next(errorResponse());
+  }
+});
+
+router.get("/currency-list", async (req, res) => {
+  try {
+    const dbResult = await CurrencyModel.find({});
+
+    const apiResult = successResponse(dbResult, []);
     res.json(apiResult);
   } catch (e) {
     next(errorResponse());

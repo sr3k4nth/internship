@@ -4,15 +4,21 @@ const CurrencyListSchema = new Schema({
   currencyName: {
     type: String,
     required: true,
+    dropDups: true,
   },
   currencyCode: {
     type: String,
+    unique: true,
+    dropDups: true,
   },
   description: {
     type: String,
   },
+  exchangeRate: {
+    type: Number,
+  },
 });
 
-const User = model("currency-list", CurrencyListSchema);
+const User = model("currencies", CurrencyListSchema);
 
 module.exports = User;

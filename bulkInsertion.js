@@ -3,6 +3,8 @@ const path = require("path");
 const csv = require("fast-csv");
 const mongoose = require("mongoose");
 const RatesModel = require("./src/db/models/Rates");
+const CurrencyModel = require("./src/db/models/CurrencyList");
+
 mongoose.connect("mongodb://localhost:27017/local", {
   useNewUrlParser: true,
   // useFindAndModify: false,
@@ -10,9 +12,12 @@ mongoose.connect("mongodb://localhost:27017/local", {
   retryWrites: false,
 });
 const db = mongoose.connection;
+const uniq = [];
 db.on("error", console.error.bind(console, "connection error: "));
 db.once("open", function () {
-  console.log("Connected successfully");
+  console.log(
+    "::::::::::::::::::::::::::::::::::::::::::::::::DB Connected successfully:::::::::::::::::::::::::::::::::::::::::::::::::"
+  );
 });
 
 function getNames(s = "") {
@@ -24,14 +29,28 @@ function getNames(s = "") {
 async function dbInsert(arr) {
   try {
     const newRate = new RatesModel(arr);
-    const res = await newRate.save();
-    console.log(res, "========================================");
+    await newRate.save();
   } catch (e) {
-    console.log(e);
+    console.log(
+      "::::::::::::::::::::::::::::::::::::::::::::::DB-ERROR::::::::::::::::::::::::::::::::::",
+      e
+    );
   }
 }
 
-async function parseCurrency(a) {
+async function currencyDBInsert(arr) {
+  try {
+    const Currency = new CurrencyModel(arr);
+    await Currency.save();
+  } catch (e) {
+    console.log(
+      "::::::::::::::::::::::::::::::::::::::::::::::DB-ERROR::::::::::::::::::::::::::::::::::",
+      e
+    );
+  }
+}
+
+async function parseCSV(a, currencyInsert, isFirstRow) {
   const date = new Date(a.Date).toISOString();
 
   delete a.Date;
@@ -47,6 +66,22 @@ async function parseCurrency(a) {
     obj.currencyName = currencyName;
     obj.currencyCode = currencyCode;
     obj.exchangeRate = +a[key];
+
+    if (currencyInsert) {
+      const hasExists = uniq?.find(
+        (item) => item.currencyCode === currencyCode
+      );
+
+      if (!hasExists && true) {
+        const props = {
+          currencyCode,
+          currencyName,
+          description: `The Currency Name is ${currencyName} and equivalent code is ${currencyCode}`,
+          exchangeRate: obj.exchangeRate,
+        };
+        await currencyDBInsert(props);
+      }
+    }
     await dbInsert(obj);
     flag.push(obj);
   });
@@ -55,14 +90,19 @@ async function parseCurrency(a) {
 }
 
 const readDataFromFile = (fileName) => {
+  let currencyInsert = false;
+
+  if (fileName === "2022.csv") {
+    currencyInsert = true;
+  }
   fs.createReadStream(path.resolve(__dirname, "files", fileName))
     .pipe(csv.parse({ headers: true }))
     .on("error", (error) => console.error(error))
     .on("data", async (row) => {
-      const data = await parseCurrency(row);
-      console.log(data);
-      console.log("----------------------------------------------");
+      await parseCSV(row, currencyInsert);
     })
-    .on("end", (rowCount) => console.log(`Parsed ${rowCount} rows`));
+    .on("end", async (rowCount) => {
+      console.log(`${JSON.stringify(uniq)}------------Parsed ${rowCount} rows`);
+    });
 };
 readDataFromFile(process.argv[2]);
