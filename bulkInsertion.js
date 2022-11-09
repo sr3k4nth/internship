@@ -4,17 +4,20 @@ const csv = require("fast-csv");
 const mongoose = require("mongoose");
 const RatesModel = require("./src/db/models/Rates");
 const CurrencyModel = require("./src/db/models/CurrencyList");
+const {
+  MONGOOSE_CONSTANTS,
+  MONGOOSE_EVENTS,
+} = require("./src/constants/dbConstants");
 
-mongoose.connect("mongodb://localhost:27017/local", {
-  useNewUrlParser: true,
-  // useFindAndModify: false,
-  useUnifiedTopology: true,
-  retryWrites: false,
-});
+mongoose.connect(MONGOOSE_CONSTANTS.URI, MONGOOSE_CONSTANTS.OPTIONS);
 const db = mongoose.connection;
 const uniq = [];
-db.on("error", console.error.bind(console, "connection error: "));
-db.once("open", function () {
+db.on(
+  MONGOOSE_EVENTS.ERROR,
+  console.error.bind(console, "::::::::::DB connection error::::::::::::: ")
+);
+
+db.once(MONGOOSE_EVENTS.OPEN, function () {
   console.log(
     "::::::::::::::::::::::::::::::::::::::::::::::::DB Connected successfully:::::::::::::::::::::::::::::::::::::::::::::::::"
   );
@@ -91,8 +94,9 @@ async function parseCSV(a, currencyInsert, isFirstRow) {
 
 const readDataFromFile = (fileName) => {
   let currencyInsert = false;
+  const LATEST_CSV_FILE = "2022.csv";
 
-  if (fileName === "2022.csv") {
+  if (fileName === LATEST_CSV_FILE) {
     currencyInsert = true;
   }
   fs.createReadStream(path.resolve(__dirname, "files", fileName))
@@ -102,7 +106,7 @@ const readDataFromFile = (fileName) => {
       await parseCSV(row, currencyInsert);
     })
     .on("end", async (rowCount) => {
-      console.log(`${JSON.stringify(uniq)}------------Parsed ${rowCount} rows`);
+      console.log(`------------Parsed ${rowCount} rows`);
     });
 };
 readDataFromFile(process.argv[2]);

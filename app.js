@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const { connect } = require("./src/db/mongoConnect");
 
 const { notFound, errorHandler } = require("./src/middlewares");
+const { MONGOOSE_CONSTANTS } = require("./src/constants/dbConstants");
 
 const app = express();
 
@@ -15,15 +16,7 @@ app.use(morgan("dev"));
 app.use(bodyParser.json());
 
 (async function () {
-  const uri = "mongodb://localhost:27017/local";
-
-  const dbOptions = {
-    useNewUrlParser: true,
-    // useFindAndModify: false,
-    useUnifiedTopology: true,
-    retryWrites: false,
-  };
-  await connect(uri, dbOptions);
+  await connect(MONGOOSE_CONSTANTS.URI, MONGOOSE_CONSTANTS.OPTIONS);
   require("./src/db/models/Rates");
 })();
 

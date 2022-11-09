@@ -11,15 +11,15 @@ const router = express.Router();
 
 // Sample URL: http://localhost:8080/fx-manager/rates/dollar?date=2013-01-23T18:30:00.000Z%22
 router.get("/rates/dollar", async (req, res) => {
-  const date = req.query.date || "2013-01-23T18:30:00.000Z";
+  const date = req.query?.date || 0;
+
+  const mapresult = [];
+  const errorMessages = [];
 
   const payload = {
     date,
   };
   const dbResult = await RatesModel.find(payload);
-
-  const mapresult = [];
-  const errorMessages = [];
 
   dbResult.forEach((item) => {
     const errorMessage =
@@ -46,6 +46,7 @@ router.get("/rates/dollar", async (req, res) => {
 router.get("/rates", async (req, res, next) => {
   try {
     const { destCurrencyCode, fromDate, toDate } = req.query;
+    const errorMessages = [];
     const payload = {
       currencyCode: destCurrencyCode,
       date: {
@@ -63,6 +64,13 @@ router.get("/rates", async (req, res, next) => {
     const lowDayObj = dbResult.find((key) => key.exchangeRate === getLowest);
     const getLowDay = lowDayObj.day;
 
+    dbResult.forEach((currency) => {
+      if (currency.exchangeRate === 0) {
+        const message = `Exchange Rate is not available on ${currency.date}`;
+        errorMessages.push(message);
+      }
+    });
+
     const result = {
       highest: {
         day: getHighDay,
@@ -75,7 +83,7 @@ router.get("/rates", async (req, res, next) => {
       exchangeRates: dbResult,
     };
 
-    const apiResult = successResponse(result, []);
+    const apiResult = successResponse(result, errorMessages);
     res.json(apiResult);
   } catch (e) {
     next(errorResponse());

@@ -13,7 +13,7 @@
 
 `npm run db:ingestion <file_name.csv>`
 
-Example: `npm run db.ingestion 2022.csv`
+Example: `npm run db:ingestion 2022.csv`
 
 ### References
 
