@@ -1,4 +1,4 @@
-# Exchange Rates Manager
+# Exchange Rates Manager App
 
 ### Requirements
 
@@ -12,6 +12,7 @@
 ## Start Data Ingestion service
 
 `npm run db:ingestion <file_name.csv>`
+
 Example: `npm run db.ingestion 2022.csv`
 
 ### References
