@@ -21,7 +21,7 @@ app.get("/test", (req, res) => {
 
 // GET /exchange-rates?srcCurrencyCode="DOLLAR"&destCurrencyCode="pound"&fromDate="2013-01-19T00:00:00.000+0000"&toDate=""
 
-app.get("/vals", async (req, res) => {
+app.get("/fx-rates", async (req, res) => {
   const { destCurrencyCode, fromDate, toDate } = req.params;
   const payload = {
     currencyCode: destCurrencyCode || "DKK",
@@ -53,6 +53,39 @@ app.get("/vals", async (req, res) => {
       },
       exchangeRates: dbResult,
     },
+    errorMessages: [],
+  };
+  console.log(dbResult);
+
+  res.json(apiResult);
+});
+
+// {"currencyCode": "DKK",  date: "2013-01-23T18:30:00.000Z" }
+
+app.get("/fx-rates/dollar", async (req, res) => {
+  // const { destCurrencyCode, fromDate, toDate } = req.params;
+
+  const date = req.params.date || "2013-01-23T18:30:00.000Z";
+
+  const payload = {
+    date,
+  };
+  const dbResult = await RatesModel.find(payload);
+
+  const mapresult = [];
+
+  dbResult.forEach((item) => {
+    const obj = {
+      currencyName: item.currencyName,
+      currencyCode: item.currencyCode,
+      valueInDollar: (1 / item.exchangeRate).toFixed(3),
+    };
+    mapresult.push(obj);
+  });
+
+  const apiResult = {
+    status: "success",
+    data: mapresult,
     errorMessages: [],
   };
   console.log(dbResult);
