@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const csv = require("fast-csv");
 const mongoose = require("mongoose");
-const User = require("./models");
+const RatesModel = require("./src/db/models/Rates");
 mongoose.connect("mongodb://localhost:27017/local", {
   useNewUrlParser: true,
   // useFindAndModify: false,
@@ -23,7 +23,7 @@ function getNames(s = "") {
 
 async function dbInsert(arr) {
   try {
-    const newRate = new User(arr);
+    const newRate = new RatesModel(arr);
     const res = await newRate.save();
     console.log(res, "========================================");
   } catch (e) {
@@ -54,14 +54,15 @@ async function parseCurrency(a) {
   return flag;
 }
 
-fs.createReadStream(
-  path.resolve(__dirname, "files", "Exchange_Rate_Report_2013.csv")
-)
-  .pipe(csv.parse({ headers: true }))
-  .on("error", (error) => console.error(error))
-  .on("data", async (row) => {
-    const data = await parseCurrency(row);
-    console.log(data);
-    console.log("----------------------------------------------");
-  })
-  .on("end", (rowCount) => console.log(`Parsed ${rowCount} rows`));
+const readDataFromFile = (fileName) => {
+  fs.createReadStream(path.resolve(__dirname, "files", fileName))
+    .pipe(csv.parse({ headers: true }))
+    .on("error", (error) => console.error(error))
+    .on("data", async (row) => {
+      const data = await parseCurrency(row);
+      console.log(data);
+      console.log("----------------------------------------------");
+    })
+    .on("end", (rowCount) => console.log(`Parsed ${rowCount} rows`));
+};
+readDataFromFile(process.argv[2]);
